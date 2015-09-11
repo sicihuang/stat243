@@ -1,0 +1,225 @@
+1.(a)
+#download zipped data file as apricots.zip
+$ wget -O apricots.zip "http://data.un.org/Handlers/DownloadHandler.ashx?DataFilter=itemCode:526&DataMartId=FAO&Format=csv&c=2,3,4,5,6,7&s=countryName:asc,elementCode:asc,year:desc"
+
+--2015-09-10 18:40:19--  http://data.un.org/Handlers/DownloadHandler.ashx?DataFilter=itemCode:526&DataMartId=FAO&Format=csv&c=2,3,4,5,6,7&s=countryName:asc,elementCode:asc,year:desc
+Resolving data.un.org... 85.159.207.229
+Connecting to data.un.org|85.159.207.229|:80... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 68264 (67K) [application/zip]
+Saving to: 'apricots.zip'
+
+apricots.zip        100%[=====================>]  66.66K  69.2KB/s   in 1.0s   
+
+2015-09-10 18:40:22 (69.2 KB/s) - 'apricots.zip' saved [68264/68264]
+
+#unzip to apricots.csv
+$ unzip -c apricots.zip > apricots.csv
+
+#print entries of individual countries (not containing +) into country.csv
+$ grep -v + apricots.csv > country.csv
+
+#print entries of regions into region.csv
+$ grep + apricots.csv > region.csv
+
+#extract entries with "2005" in the 4th column, replace commas in first column (country names) with colons and write into country2005.csv
+$ grep '^".*",".*",".*","2005"' country.csv |sed 's/, /:/g' > country2005.csv
+
+#Sort the entries with "Area Harvested" in the 3rd column by the second character (skipping the quotation mark) of field 6 numerically in reverse (decreasing) order, using “,” as delimiters; print out the first five entries of column 1
+$ grep '^".*",".*","Area Harvested"' country2005.csv | sort -t, -k6.2 -n -r | cut -d',' -f1 | head -n 5
+
+"Turkey"
+"Iran:Islamic Republic of"
+"Pakistan"
+"Uzbekistan"
+"Algeria"
+
+#for loop; replacing 2005 from above with i=1965; 1975; 1985; 1995; 2005
+#note: need double quotations around regular expression so that i is read in as a variable; single quotations make bash take the input literally
+$ for ((i=1965; i<=2005; i=i+10)) 
+  do 
+     grep "^\".*\",\".*\",\".*\",\"$i\"" country.csv |sed 's/, /:/g' > country${i}.csv
+     echo "The 5 countries using the most land to produce apricots in ${i} are: "
+     grep '^".*",".*","Area Harvested"' country${i}.csv | sort -t, -k6.2 -n -r | cut -d',' -f1 | head -n 5
+
+  done
+
+#The rank have changed over the years
+The 5 countries using the most land to produce apricots in 1965 are: 
+"USSR"
+"Turkey"
+"United States of America"
+"Spain"
+"Tunisia"
+The 5 countries using the most land to produce apricots in 1975 are: 
+"USSR"
+"Turkey"
+"Spain"
+"Tunisia"
+"Italy"
+The 5 countries using the most land to produce apricots in 1985 are: 
+"Turkey"
+"USSR"
+"Spain"
+"Iran:Islamic Republic of"
+"Tunisia"
+The 5 countries using the most land to produce apricots in 1995 are: 
+"Turkey"
+"Iran:Islamic Republic of"
+"Spain"
+"Ukraine"
+"Tunisia"
+The 5 countries using the most land to produce apricots in 2005 are: 
+"Turkey"
+"Iran:Islamic Republic of"
+"Pakistan"
+"Uzbekistan"
+"Algeria"
+
+1.(b)
+#function assigns the first user input value (assuming it is a valid product code) to the variable $code; download the zipped data file from the url corresponding to that code, unzips it and displays the first few lines of the file 
+$ function myFun(){
+  code=$1
+  wget -O $code.zip "http://data.un.org/Handlers/DownloadHandler.ashx?DataFilter=itemCode:${code}&DataMartId=FAO&Format=csv&c=2,3,4,5,6,7&s=countryName:asc,elementCode:asc,year:desc"
+  unzip -c $code.zip > $code.csv
+  less $code.csv
+  }
+
+$ myFun 572
+--2015-09-10 19:36:13--  http://data.un.org/Handlers/DownloadHandler.ashx?DataFilter=itemCode:572&DataMartId=FAO&Format=csv&c=2,3,4,5,6,7&s=countryName:asc,elementCode:asc,year:desc
+Resolving data.un.org... 85.159.207.229
+Connecting to data.un.org|85.159.207.229|:80... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 67590 (66K) [application/zip]
+Saving to: '572.zip'
+
+572.zip             100%[=====================>]  66.01K  47.3KB/s   in 1.4s   
+
+2015-09-10 19:36:16 (47.3 KB/s) - '572.zip' saved [67590/67590]
+
+2.
+#note: wget -r -A.txt http://www1.ncdc.noaa.gov/pub/data/ghcn/daily/ could have worked if one of the folders wasn’t loading so slowly
+#download html file 
+$ wget http://www1.ncdc.noaa.gov/pub/data/ghcn/daily/
+--2015-09-10 20:42:52--  http://www1.ncdc.noaa.gov/pub/data/ghcn/daily/
+Resolving www1.ncdc.noaa.gov... 2610:20:8040:2::102, 205.167.25.102
+Connecting to www1.ncdc.noaa.gov|2610:20:8040:2::102|:80... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 4888 (4.8K) [text/html]
+Saving to: 'index.html'
+
+index.html          100%[=====================>]   4.77K  --.-KB/s   in 0s     
+
+2015-09-10 20:42:53 (141 MB/s) - 'index.html' saved [4888/4888]
+
+#extract txt file names and save them in the variable $name
+$ name=$(grep 'txt' index.html | sed 's/></,/g'| sed 's/>/,/g' |sed 's/</,/g' |cut -d',' -f8)
+
+#for loop to download each of the txt files stored in $name
+$ for i in $name 
+  do 
+      wget http://www1.ncdc.noaa.gov/pub/data/ghcn/daily/$i
+  done
+--2015-09-10 21:38:14--  http://www1.ncdc.noaa.gov/pub/data/ghcn/daily/ghcnd-countries.txt
+Resolving www1.ncdc.noaa.gov... 2610:20:8040:2::102, 205.167.25.102
+Connecting to www1.ncdc.noaa.gov|2610:20:8040:2::102|:80... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 3670 (3.6K) [text/plain]
+Saving to: 'ghcnd-countries.txt'
+
+ghcnd-countries.txt 100%[=====================>]   3.58K  --.-KB/s   in 0s     
+
+2015-09-10 21:38:15 (121 MB/s) - 'ghcnd-countries.txt' saved [3670/3670]
+
+--2015-09-10 21:38:15--  http://www1.ncdc.noaa.gov/pub/data/ghcn/daily/ghcnd-inventory.txt
+Resolving www1.ncdc.noaa.gov... 205.167.25.102, 2610:20:8040:2::102
+Connecting to www1.ncdc.noaa.gov|205.167.25.102|:80... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 26289920 (25M) [text/plain]
+Saving to: 'ghcnd-inventory.txt'
+
+ghcnd-inventory.txt 100%[=====================>]  25.07M  3.55MB/s   in 8.7s   
+
+2015-09-10 21:38:24 (2.89 MB/s) - 'ghcnd-inventory.txt' saved [26289920/26289920]
+
+--2015-09-10 21:38:24--  http://www1.ncdc.noaa.gov/pub/data/ghcn/daily/ghcnd-states.txt
+Resolving www1.ncdc.noaa.gov... 205.167.25.102, 2610:20:8040:2::102
+Connecting to www1.ncdc.noaa.gov|205.167.25.102|:80... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 1086 (1.1K) [text/plain]
+Saving to: 'ghcnd-states.txt'
+
+ghcnd-states.txt    100%[=====================>]   1.06K  --.-KB/s   in 0s     
+
+2015-09-10 21:38:24 (64.7 MB/s) - 'ghcnd-states.txt' saved [1086/1086]
+
+--2015-09-10 21:38:24--  http://www1.ncdc.noaa.gov/pub/data/ghcn/daily/ghcnd-stations.txt
+Resolving www1.ncdc.noaa.gov... 205.167.25.102, 2610:20:8040:2::102
+Connecting to www1.ncdc.noaa.gov|205.167.25.102|:80... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 8431010 (8.0M) [text/plain]
+Saving to: 'ghcnd-stations.txt'
+
+ghcnd-stations.txt  100%[=====================>]   8.04M  2.37MB/s   in 3.8s   
+
+2015-09-10 21:38:28 (2.13 MB/s) - 'ghcnd-stations.txt' saved [8431010/8431010]
+
+--2015-09-10 21:38:28--  http://www1.ncdc.noaa.gov/pub/data/ghcn/daily/ghcnd-version.txt
+Resolving www1.ncdc.noaa.gov... 205.167.25.102, 2610:20:8040:2::102
+Connecting to www1.ncdc.noaa.gov|205.167.25.102|:80... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 270 [text/plain]
+Saving to: 'ghcnd-version.txt'
+
+ghcnd-version.txt   100%[=====================>]     270  --.-KB/s   in 0s     
+
+2015-09-10 21:38:28 (32.2 MB/s) - 'ghcnd-version.txt' saved [270/270]
+
+--2015-09-10 21:38:28--  http://www1.ncdc.noaa.gov/pub/data/ghcn/daily/readme.txt
+Resolving www1.ncdc.noaa.gov... 205.167.25.102, 2610:20:8040:2::102
+Connecting to www1.ncdc.noaa.gov|205.167.25.102|:80... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 24088 (24K) [text/plain]
+Saving to: 'readme.txt'
+
+readme.txt          100%[=====================>]  23.52K  --.-KB/s   in 0.1s   
+
+2015-09-10 21:38:29 (226 KB/s) - 'readme.txt' saved [24088/24088]
+
+--2015-09-10 21:38:29--  http://www1.ncdc.noaa.gov/pub/data/ghcn/daily/status.txt
+Resolving www1.ncdc.noaa.gov... 205.167.25.102, 2610:20:8040:2::102
+Connecting to www1.ncdc.noaa.gov|205.167.25.102|:80... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 29430 (29K) [text/plain]
+Saving to: 'status.txt'
+
+status.txt          100%[=====================>]  28.74K   137KB/s   in 0.2s   
+
+2015-09-10 21:38:29 (137 KB/s) - 'status.txt' saved [29430/29430]
+
+3.
+\documentclass{article}
+#specify the package (geometry) used for setting margins
+\usepackage{geometry}
+#set margins to 1 in all around
+\geometry{tmargin=1in,bmargin=1in,lmargin=1in,rmargin=1in}
+
+#beginning of the portion that is included in pdf
+\begin{document}
+
+#no indentation in the beginning of paragraph; extract the start and end dates of the time series and embed them as inline code
+\noindent The height of the water level in Lake Huron fluctuates over time. Here I 'analyze' the variation using R. I show a histogram of the lake levels for the period \rinline{x <- start(LakeHuron)[1]} to \rinline{y <- end(LakeHuron)[1]}.
+
+#r code chunk; produce histogram of data set with width 3 and height 4
+<<r-plot, fig.width = 3, fig.height=4>>=
+hist(LakeHuron)
+@
+
+#another r cod chunk
+<<r-chunk>>=
+lowHi <- c(which.min(LakeHuron), which.max(LakeHuron))
+yearExtrema <- attributes(LakeHuron) $tsp[1]-1 + lowHi
+@
+
+#end of document 
+\end{document}
