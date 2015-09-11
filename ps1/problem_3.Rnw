@@ -1,0 +1,23 @@
+\documentclass{article}
+\usepackage{geometry}
+\geometry{tmargin=1in,bmargin=1in,lmargin=1in,rmargin=1in}
+
+<<setup, include=FALSE>>=
+x <- start(LakeHuron)[1]
+y <- end(LakeHuron)[1]
+@
+
+\begin{document}
+
+\noindent The height of the water level in Lake Huron fluctuates over time. Here I 'analyze' the variation using R. I show a histogram of the lake levels for the period \Sexpr{x} to \Sexpr{y}.
+
+<<r-plot, fig.width = 3, fig.height=4>>=
+hist(LakeHuron)
+@
+
+<<r-chunk>>=
+lowHi <- c(which.min(LakeHuron), which.max(LakeHuron))
+yearExtrema <- attributes(LakeHuron) $tsp[1]-1 + lowHi
+@
+
+\end{document}
