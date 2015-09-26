@@ -1,0 +1,5 @@
+Although workflow management tools are useful in terms of automatically modify related files when one file has been updated, could it potentially create errors if the conditions under which to modify such files are wrongly defined? Would it impose further challenges while locating errors since files are being modified automatically?
+
+Could automated testing be used to resolve the above problem?
+
+Is there a down side for test-driven development?
