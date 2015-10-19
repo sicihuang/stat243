@@ -1,0 +1,91 @@
+\documentclass{article}
+\usepackage{geometry}
+\geometry{tmargin=1in,bmargin=1in,lmargin=1in,rmargin=1in}
+
+<<setup, include=FALSE>>=
+library(knitr)
+@
+
+\begin{document}
+\title{Stat243: Problem Set 5}
+\author{Sicun Huang}
+\date{October 19, 2015}
+
+\maketitle
+
+\noindent 1.
+
+(a) When storing 1.000000000001 on a computer, we have 16 digits of accuracy.
+
+<<r-chunk1, compile-R>>=
+options( digits = 22 )
+1.000000000001
+@
+
+(b) Using sum function did not result in the same level of accuracy as we got from (a); instead of 16, answer has 12 digits of accuracy.
+
+<<r-chunk2>>=
+x <- c( 1, rep(1e-16, 10000) )
+sum( x )
+@
+
+(c) In python, the result from the sum function was of even lower accuracy; it was an integer.
+
+<<python-chunk1, engine='python'>>=
+import numpy as np
+from decimal import Decimal
+
+x = np.array([1]+[1e-16]*(10000))
+print( Decimal( sum(x) ) )
+@
+
+(d) Having 1 as the first value in the vector in R returned an integer 1 i.e. the result has 0 digits of accuracy. If 1 is the last value instead of the first, we get an answer with 16 digits of accuracy, which is what we expected.
+
+<<r-chunk3>>=
+y <- 1
+for( i in 1:10000 ){
+   y <- y + 1e-16
+}
+y
+
+z <- 0
+for( i in 1:10000 ){
+  z <- z + 1e-16
+}
+z <- z+1
+z
+@
+
+In python, however, we get 1.0 from either summing order.
+
+<<python-chunk2, engine='python'>>=
+y = 1
+for i in range(10000):
+    y = y+1e-16
+print(y)
+@
+
+<<python-chunk3, engine='python'>>=
+z = 0
+for i in range(10000):
+    z = z+1e-16
+z = z+1
+print(z)
+@
+
+(e) Observe that since its result wasn't the same as the first for loop, R's sum function isn't simply summing numbers from left to right. Although it's didn't achieve the level of accuracy we were expecting either. 
+
+\noindent 2. As we can see from the results below, overall, integer calculations in R are faster than floating point calculations.
+
+<<r-chunk4>>=
+library(microbenchmark)
+
+a <- rep(1, 1000000)
+b <- rep(as.numeric(1.00000000), 1000000)
+
+microbenchmark(sum(a), sum(b))
+microbenchmark(a-10000, b-10000)
+microbenchmark(a^10000, b^10000)
+microbenchmark(c <- a[1:9999], d <- b[1:9999])
+@
+\end{document}
