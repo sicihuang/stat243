@@ -266,7 +266,8 @@ linearReg <- lm(y ~ x1 + x2 + x3)
 intVal <- as.double(coef(linearReg))
 
 #estimate betas
-#trace: print iterations; maxit: maximum iterations; fnscale=-1: flip log-likelihood function to maximize
+#trace: print iterations; maxit: maximum iterations; fnscale=-1: flip log-likelihood function 
+#to maximize
 result <- optim(intVal, fn=probitLoglik, gr=NULL, y=y, X=X, method="BFGS", 
                 control=list(trace=TRUE,maxit=10000,fnscale=-1), hessian=TRUE)
 print(result)
